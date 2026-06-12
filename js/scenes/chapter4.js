@@ -46,7 +46,7 @@ const LADDER_CAPTIONS = [
   '3D → 4D &nbsp;·&nbsp; a cube, moved <i>ana</i> — through the 4th axis — sweeps a <b>TESSERACT</b>',
 ];
 const mainHint = isTouch =>
-  `${isTouch ? 'one finger orbits · two fingers pinch / pan / twist' : 'drag to orbit · scroll to zoom'}<br>XW / YW / ZW are rotations <i>through</i> the 4th axis`;
+  `${isTouch ? 'one finger pans · two fingers zoom / tilt / rotate' : 'drag to orbit · scroll to zoom'}<br>XW / YW / ZW are rotations <i>through</i> the 4th axis`;
 const QUIZ_HINT = 'which 3D solid is this hypershape’s slice at w = 0?<br><b>Ⓐ</b> left · <b>Ⓑ</b> middle · <b>Ⓒ</b> right — drag to orbit the shadow';
 
 const hueFor = w => 0.68 - 0.60 * clamp((w + 2) / 4, 0, 1);
@@ -219,7 +219,12 @@ export function chapter4(ctx) {
     controls.enableDamping = true;
     controls.minDistance = 6;
     controls.maxDistance = 60;
+    // map-app touch scheme: one finger pans; two fingers pinch-zoom,
+    // drag-rotate/tilt (built-in) and twist-rotate (helper below)
+    controls.touches.ONE = THREE.TOUCH.PAN;
+    controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
     twistOff = enableTwoFingerTwist(controls);
+    ctx.state.debug4 = { cam, controls };
   }
 
   // Rebuild a fat-line object's geometry (dispose old GPU buffers each frame).
@@ -606,6 +611,9 @@ export function chapter4(ctx) {
       if (!scene) return; // WebGL init failed — manager already shows a notice
       t += dt;
       for (const p of PLANES) if (spinning[p]) angles[p] += SPEEDS[p] * dt;
+      // rubber-band the pan target so the tesseract can never be lost
+      const tl = controls.target.length();
+      if (tl > 14) controls.target.multiplyScalar(14 / tl);
       controls.update();
       if (ladder) {
         ladder.t += dt / 2.3;

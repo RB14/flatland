@@ -46,8 +46,8 @@ Mobile / touch (controls appear automatically on coarse-pointer devices; `?touch
 - **virtual joystick** (bottom-left) — slide along the Line in 1D; in Flatland Arthur turns
   toward — and walks in — whatever direction you point (screen-up = north)
 - **HOP** button (bottom-right) — step through the 2nd dimension in Lineland
-- **tap** the dialogue box to advance · in 3D/4D one finger orbits; **two fingers pinch-zoom,
-  pan and twist-rotate simultaneously** (map-style)
+- **tap** the dialogue box to advance · in 3D/4D the map-app scheme: **one finger pans**;
+  **two fingers pinch-zoom, drag to rotate/tilt, twist to spin** — all in one gesture
 - the dimension dots (top-right) jump between chapters
 
 ## Tech

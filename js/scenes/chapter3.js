@@ -10,7 +10,7 @@ import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
 import { getRenderer, enableTwoFingerTwist } from '../three-setup.js';
 import { buildWorld, shapeSegments, transformedPts } from '../world2d.js';
 import { convexHull2D, sliceEdges, extractEdges } from '../math/poly.js';
-import { wait, tween, easeInOut } from '../util.js';
+import { wait, tween, easeInOut, clamp } from '../util.js';
 
 const L_BEHOLD = [
   { who: 'THE SPHERE', text: 'Behold... Flatland.' },
@@ -148,8 +148,13 @@ export function chapter3(ctx) {
     controls.maxDistance = 300;
     controls.enableDamping = true;
     controls.screenSpacePanning = false; // pan glides along the plane
+    // map-app touch scheme: one finger pans; two fingers pinch-zoom,
+    // drag-rotate/tilt (built-in) and twist-rotate (helper below)
+    controls.touches.ONE = THREE.TOUCH.PAN;
+    controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
     controls.enabled = false;
     twistOff = enableTwoFingerTwist(controls);
+    ctx.state.debug3 = { cam, controls };
     camRig(0);
   }
 
@@ -497,7 +502,7 @@ export function chapter3(ctx) {
     if (controls) controls.enabled = true;
     if (!alive) return;
     ctx.hint(ctx.isTouch
-      ? 'one finger orbits · two fingers pinch / pan / twist'
+      ? 'one finger pans · two fingers zoom / tilt / rotate'
       : 'drag to orbit · scroll to zoom');
     await dialogue.say(L_BEHOLD);
     if (!alive) return;
@@ -544,7 +549,13 @@ export function chapter3(ctx) {
       if (!scene) return; // WebGL init failed — manager already shows a notice
       t += dt;
       if (rising) camRig(riseK);
-      else controls.update();
+      else {
+        // rubber-band the pan target so Flatland can never be lost off-screen
+        controls.target.x = clamp(controls.target.x, -75, 75);
+        controls.target.z = clamp(controls.target.z, -50, 50);
+        controls.target.y = clamp(controls.target.y, 0, 30);
+        controls.update();
+      }
 
       const sph = scene.userData.sphereNPC;
       sph.position.y = 17 + Math.sin(t * 0.7) * 1.6;
