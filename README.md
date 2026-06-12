@@ -3,6 +3,8 @@
 *A journey through the dimensions* — a browser game inspired by Edwin A. Abbott's
 **Flatland: A Romance of Many Dimensions** (1884) and *Flatland: The Movie*.
 
+**▶ Play it online: <https://rb14.github.io/flatland/>**
+
 You play **Arthur Square** as he climbs the dimensional ladder: 0D → 1D → 2D → 3D → 4D.
 The unifying idea: in every chapter you see both the **omniscient view** and the **native
 view** of that dimension's inhabitants — so you *feel* why each world cannot conceive the
