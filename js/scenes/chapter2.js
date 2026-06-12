@@ -43,7 +43,8 @@ export function chapter2(ctx) {
   const player = { pos: [...world.spawn], angle: Math.PI / 2 };
   ctx.state.arthur = player;
 
-  let phase = 'intro', night = 0, whiteout = 0, zoom = 7, controls = true;
+  let phase = 'intro', night = 0, whiteout = 0, controls = true;
+  let zoom = innerWidth < 700 ? 5.2 : 7; // wider framing on phones
   let sphere = null; // { pos, t, r }
   let segsCache = null;
 
@@ -109,7 +110,9 @@ export function chapter2(ctx) {
     await dialogue.say(INTRO);
     if (!alive) return;
     phase = 'findHex';
-    ctx.hint('W / S move · A / D turn · Q / E sidestep<br>find <b style="color:#7fd4ff">Hex ⬡</b> — follow the beacon');
+    ctx.hint(ctx.isTouch
+      ? 'stick: up/down to walk · left/right to turn<br>find <b style="color:#7fd4ff">Hex ⬡</b> — follow the beacon'
+      : 'W / S move · A / D turn · Q / E sidestep<br>find <b style="color:#7fd4ff">Hex ⬡</b> — follow the beacon');
 
     await until(() => !alive || dist2(player.pos, world.hex.pos) < 13 * 13);
     if (!alive) return;
@@ -148,7 +151,7 @@ export function chapter2(ctx) {
     phase = 'ascend';
     ctx.audio.whoosh();
     await Promise.all([
-      tween(v => { zoom = v; }, 7, 1.15, 3.2),
+      tween(v => { zoom = v; }, zoom, 1.15, 3.2),
       tween(v => { whiteout = v; }, 0, 1, 3.2),
     ]);
     if (alive) ctx.goto(3);
@@ -159,6 +162,7 @@ export function chapter2(ctx) {
     title: 'FLATLAND',
     sub: 'A ROMANCE OF TWO DIMENSIONS',
     uses: { flat: true, retina: true },
+    touch: { joystick: 'xy' },
 
     async init() {
       ctx.hint('');

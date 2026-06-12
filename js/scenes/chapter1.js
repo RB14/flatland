@@ -5,13 +5,13 @@ import { wait, until, tween, clamp, lerp } from '../util.js';
 
 const GAP = 0.7;
 
-const INTRO = [
+const INTRO = isTouch => [
   { who: 'NARRATOR', text: 'LINELAND. The Kingdom of One Dimension. Its citizens — points and segments — live strung upon the Line, like beads that may never leave the thread.' },
-  { who: 'NARRATOR', text: 'You are dreaming, Arthur Square. In this dream you are a segment among them. Move with A / D — left and right are the WHOLE of space here.' },
+  { who: 'NARRATOR', text: `You are dreaming, Arthur Square. In this dream you are a segment among them. ${isTouch ? 'Drag the stick' : 'Move with A / D'} — left and right are the WHOLE of space here.` },
 ];
-const LESSON = [
+const LESSON = isTouch => [
   { who: 'NARRATOR', text: 'You cannot pass. In Lineland your neighbours are fixed at birth: the one to your left, the one to your right — forever. There is no "around".' },
-  { who: 'NARRATOR', text: '...But you are no Linelander, Arthur. You are a SQUARE. Press SPACE beside a neighbour to step around them — THROUGH the second dimension.' },
+  { who: 'NARRATOR', text: `...But you are no Linelander, Arthur. You are a SQUARE. ${isTouch ? 'Tap HOP' : 'Press SPACE'} beside a neighbour to step around them — THROUGH the second dimension.` },
 ];
 const AFTER_HOP = [
   { who: 'NARRATOR', text: 'To Mrs. Point, you have just vanished from the universe — and reappeared on her other side. A miracle. Or, as her grandchildren will insist: a myth.' },
@@ -57,10 +57,12 @@ export function chapter1(ctx) {
   }
 
   async function runLesson() {
-    await dialogue.say(LESSON);
+    await dialogue.say(LESSON(ctx.isTouch));
     if (!alive) return;
     hopReady = true;
-    ctx.hint('A / D move · <b>SPACE</b> beside a neighbour — step <i>sideways</i> through the 2nd dimension');
+    ctx.hint(ctx.isTouch
+      ? '<b>HOP</b> beside a neighbour — step <i>sideways</i> through the 2nd dimension'
+      : 'A / D move · <b>SPACE</b> beside a neighbour — step <i>sideways</i> through the 2nd dimension');
   }
 
   function nearestBlocker() {
@@ -87,9 +89,11 @@ export function chapter1(ctx) {
   async function script() {
     await wait(600);
     if (!alive) return;
-    await dialogue.say(INTRO);
+    await dialogue.say(INTRO(ctx.isTouch));
     if (!alive) return;
-    ctx.hint('A / D — move along the Line · approach <b style="color:#ff9a62">the King</b> (east)');
+    ctx.hint(ctx.isTouch
+      ? 'drag ◀ ▶ along the Line · approach <b style="color:#ff9a62">the King</b> (east)'
+      : 'A / D — move along the Line · approach <b style="color:#ff9a62">the King</b> (east)');
     await until(() => !alive || kingMet);
     if (!alive) return;
 
@@ -111,6 +115,7 @@ export function chapter1(ctx) {
     title: 'LINELAND',
     sub: 'THE KINGDOM OF THE STRAIGHT LINE',
     uses: { flat: true, retina: true },
+    touch: { joystick: 'x', actions: [{ label: 'HOP ↷', code: 'Space' }] },
 
     async init() {
       ctx.hint('');
@@ -257,12 +262,16 @@ export function chapter1(ctx) {
         rx.fillStyle = '#5d6480';
         rx.font = '9px "IBM Plex Mono", monospace';
         rx.textAlign = 'center';
-        rx.fillText('← neighbour          a 1D retina is two points          neighbour →', W / 2, H - 4);
+        rx.fillText(W < 400
+          ? '← a 1D retina is two points →'
+          : '← neighbour          a 1D retina is two points          neighbour →', W / 2, H - 4);
       } else {
         rx.fillStyle = '#5d6480';
         rx.font = '10px "IBM Plex Mono", monospace';
         rx.textAlign = 'center';
-        rx.fillText('— you are outside the Line: its whole universe is below you —', W / 2, H / 2 + 3);
+        rx.fillText(W < 400
+          ? '— you are outside the Line —'
+          : '— you are outside the Line: its whole universe is below you —', W / 2, H / 2 + 3);
       }
     },
 

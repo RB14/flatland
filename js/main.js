@@ -3,6 +3,7 @@
 import { Input } from './input.js';
 import { AudioFX } from './audio.js';
 import { Dialogue } from './dialogue.js';
+import { TouchControls } from './touch.js';
 import { resizeRenderer } from './three-setup.js';
 import { wait } from './util.js';
 import { chapter0 } from './scenes/chapter0.js';
@@ -23,6 +24,14 @@ const navEl = $('nav');
 const audio = new AudioFX();
 const input = new Input();
 const dialogue = new Dialogue($('dialogue'), audio);
+
+// Touch devices get on-screen controls (?touch=1/0 overrides for testing)
+const bootParams = new URLSearchParams(location.search);
+const isTouch = bootParams.has('touch')
+  ? bootParams.get('touch') !== '0'
+  : matchMedia('(pointer: coarse)').matches;
+if (isTouch) document.body.classList.add('touch');
+const touch = new TouchControls(input);
 
 addEventListener('pointerdown', () => audio.ensure());
 addEventListener('keydown', () => audio.ensure());
@@ -65,7 +74,7 @@ const panel = {
 
 const ctx = {
   flat, fx, retina, rx, glContainer,
-  audio, input, dialogue, hud, hint, choose, panel,
+  audio, input, dialogue, hud, hint, choose, panel, isTouch,
   clearChoices: () => { choicesEl.innerHTML = ''; },
   state: {},
   goto: i => manager.goto(i),
@@ -97,6 +106,7 @@ const manager = {
     flat.classList.toggle('hidden', !u.flat);
     retinaWrap.classList.toggle('hidden', !u.retina);
     glContainer.classList.toggle('hidden', !u.gl);
+    touch.configure(isTouch ? this.cur.touch || null : null);
     hud.set(this.cur.dim, this.cur.title, this.cur.sub);
     audio.setMood(this.cur.dim);
     navDots.forEach((d, k) => d.classList.toggle('active', k === i));
@@ -145,6 +155,7 @@ function fit() {
   flat.style.width = innerWidth + 'px';
   flat.style.height = innerHeight + 'px';
   fx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  retina.width = innerWidth < 700 ? 320 : 480; // fewer raycast columns on phones
   resizeRenderer();
   manager.cur?.onResize?.();
 }
@@ -156,6 +167,7 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
+  touch.setSuspended(dialogue.active);
   try { manager.cur?.update?.(dt); } catch (e) { console.error(e); }
   requestAnimationFrame(frame);
 }
@@ -175,7 +187,9 @@ function showTitle() {
       “It is neither,” calmly replied the voice of the Sphere. “It is Knowledge.”</p>
       <button id="begin">▶ &nbsp;BEGIN IN POINTLAND</button>
       <p class="fine">after Edwin A. Abbott's “Flatland: A Romance of Many Dimensions” (1884)<br>
-      WASD / arrows to move · SPACE to advance dialogue · 1–5 to jump between dimensions · 🎧 sound on</p>
+      ${isTouch
+        ? 'drag the stick to move · tap the box to advance dialogue · dimension dots jump chapters · 🎧 sound on'
+        : 'WASD / arrows to move · SPACE to advance dialogue · 1–5 to jump between dimensions · 🎧 sound on'}</p>
     </div>`;
   overlay.classList.remove('hidden');
   $('begin').onclick = () => {

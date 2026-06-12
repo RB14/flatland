@@ -45,7 +45,8 @@ const LADDER_CAPTIONS = [
   '2D → 3D &nbsp;·&nbsp; a square, moved upward, sweeps a <b>CUBE</b>',
   '3D → 4D &nbsp;·&nbsp; a cube, moved <i>ana</i> — through the 4th axis — sweeps a <b>TESSERACT</b>',
 ];
-const MAIN_HINT = 'drag to orbit · scroll to zoom<br>XW / YW / ZW are rotations <i>through</i> the 4th axis';
+const mainHint = isTouch =>
+  `drag to orbit · ${isTouch ? 'pinch' : 'scroll'} to zoom<br>XW / YW / ZW are rotations <i>through</i> the 4th axis`;
 const QUIZ_HINT = 'which 3D solid is this hypershape’s slice at w = 0?<br><b>Ⓐ</b> left · <b>Ⓑ</b> middle · <b>Ⓒ</b> right — drag to orbit the shadow';
 
 const hueFor = w => 0.68 - 0.60 * clamp((w + 2) / 4, 0, 1);
@@ -425,7 +426,7 @@ export function chapter4(ctx) {
     wireLines.visible = true;
     for (const s of vertSpheres) s.visible = true;
     buildMainPanel();
-    ctx.hint(MAIN_HINT);
+    ctx.hint(mainHint(ctx.isTouch));
   }
 
   function renderQuiz(dt) {
@@ -439,11 +440,17 @@ export function chapter4(ctx) {
     const { pos, col } = edgeBuffers(proj, rvMoved, q.edges);
     setFatLines(q.lines, pos, col);
 
-    // candidates tumble in their corner of your eye
-    for (const h of q.candHolders) {
+    // candidates tumble in their corner of your eye; spacing and size adapt
+    // to the viewport so the line-up fits portrait phones too
+    const spread = Math.min(3.6, 3.3 * cam.aspect);
+    const base = Math.min(1, spread / 3.3);
+    q.candHolders.forEach((h, i) => {
+      h.position.x = [-1, 0, 1][i] * spread;
       h.children[0].rotation.x += dt * 0.5;
       h.children[0].rotation.y += dt * 0.33;
-    }
+      const pulse = q.revealed && i === q.answerIdx ? 1 + 0.12 * Math.sin(t * 5) : 1;
+      h.scale.setScalar(base * pulse);
+    });
     if (q.revealed) {
       // the true slice, materializing as the body passes w = 0
       if (q.sliceMesh) {
@@ -458,15 +465,12 @@ export function chapter4(ctx) {
         q.sliceWire = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 8), sliceWireMat);
         scene.add(q.sliceMesh, q.sliceWire);
       }
-      // the winning candidate takes a bow
-      const winner = q.candHolders[q.answerIdx];
-      const s = 1 + 0.12 * Math.sin(t * 5);
-      winner.scale.set(s, s, s);
     }
     if (q.insetsOn) {
       for (const v of insetViews) {
         if (v.mesh) { v.scene.remove(v.mesh); v.mesh.geometry.dispose(); v.mesh = null; }
-        const geo = crossSection(rv, q.edges, v.off);
+        // slice AT w = off: shift the body by -off so the w=0 slicer lands there
+        const geo = crossSection(rv, q.edges, -v.off);
         if (geo) {
           v.mesh = new THREE.Mesh(geo, sliceMat);
           v.scene.add(v.mesh);
@@ -478,7 +482,7 @@ export function chapter4(ctx) {
   }
 
   function renderInsets() {
-    const s = 148, pad = 12, x0 = 16, top0 = 64;
+    const s = innerWidth < 760 ? 92 : 148, pad = 10, x0 = 12, top0 = 56;
     renderer.setScissorTest(true);
     insetViews.forEach((v, k) => {
       const y = innerHeight - (top0 + (s + pad) * k + s);
@@ -500,7 +504,7 @@ export function chapter4(ctx) {
     chips.slice?.classList.toggle('active', on);
     ctx.hint(on
       ? 'the <b>3D slice</b> of the tesseract at w = 0<br>keep XW / YW / ZW spinning to watch it morph'
-      : MAIN_HINT);
+      : mainHint(ctx.isTouch));
     if (on && !sliceIntroduced) {
       sliceIntroduced = true;
       dialogue.say(SLICE_FIRST);
@@ -534,7 +538,7 @@ export function chapter4(ctx) {
     ladderLines = null;
     wireLines.visible = true;
     for (const s of vertSpheres) s.visible = true;
-    ctx.hint(MAIN_HINT);
+    ctx.hint(mainHint(ctx.isTouch));
     await dialogue.say(LADDER_END);
   }
 
@@ -580,7 +584,7 @@ export function chapter4(ctx) {
     if (!alive) return;
     await dialogue.say(INTRO);
     if (!alive) return;
-    ctx.hint(MAIN_HINT);
+    ctx.hint(mainHint(ctx.isTouch));
   }
 
   return {

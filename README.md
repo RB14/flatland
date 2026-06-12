@@ -33,11 +33,20 @@ Internet access is required on first load (Three.js + fonts come from CDN).
 
 ## Controls
 
+Desktop:
+
 - **W/S** move · **A/D** turn · **Q/E** sidestep (Flatland) — **A/D** move (Lineland)
 - **SPACE / ENTER / click** advance dialogue · **SPACE** hop dimension (Lineland)
 - **drag** orbit · **scroll** zoom (3D/4D chapters)
 - **1–5** jump straight to any chapter · `?ch=N` URL param does the same
 - 🔊 toggle in the top-right
+
+Mobile / touch (controls appear automatically on coarse-pointer devices; `?touch=1/0` overrides):
+
+- **virtual joystick** (bottom-left) — move along the Line in 1D; walk/turn in Flatland
+- **HOP** button (bottom-right) — step through the 2nd dimension in Lineland
+- **tap** the dialogue box to advance · **one-finger drag** orbits, **pinch** zooms in 3D/4D
+- the dimension dots (top-right) jump between chapters
 
 ## Tech
 

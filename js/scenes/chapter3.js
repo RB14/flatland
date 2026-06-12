@@ -489,7 +489,7 @@ export function chapter3(ctx) {
     rising = false;
     if (controls) controls.enabled = true;
     if (!alive) return;
-    ctx.hint('drag to orbit · scroll to zoom');
+    ctx.hint(ctx.isTouch ? 'drag to orbit · pinch to zoom' : 'drag to orbit · scroll to zoom');
     await dialogue.say(L_BEHOLD);
     if (!alive) return;
     await tween(v => { highlight = v; }, 0, 1, 1.2);

@@ -18,6 +18,8 @@ html, body {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
 }
 
 .hidden { display: none !important; }
@@ -181,3 +183,61 @@ html, body {
 #title-screen button.ghostbtn { border-color: #555d80; color: #aab1d0; }
 #title-screen button.ghostbtn:hover { background: #555d80; color: #fff; }
 #title-screen .fine { font-size: 10px; color: #5d6480; letter-spacing: .08em; margin-top: 36px; line-height: 1.8; }
+
+/* ---- touch controls ---- */
+#touch { position: fixed; inset: 0; z-index: 7; pointer-events: none; transition: opacity .25s; }
+#touch.suspended { opacity: .18; }
+#touch.suspended * { pointer-events: none !important; }
+#joy {
+  position: absolute; left: 18px; bottom: 18px; width: 124px; height: 124px;
+  border: 1px solid #444a66; border-radius: 50%;
+  background: radial-gradient(circle, #0a0c18dd 40%, #0a0c1888);
+  pointer-events: auto; touch-action: none;
+}
+#joy-thumb {
+  position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px;
+  border-radius: 50%; background: #2a2f4add; border: 1px solid #8b93b8;
+  pointer-events: none;
+}
+#touch-actions {
+  position: absolute; right: 20px; bottom: 34px;
+  display: flex; gap: 12px; pointer-events: none;
+}
+#touch-actions button {
+  width: 78px; height: 78px; border-radius: 50%;
+  pointer-events: auto; touch-action: none;
+  border: 1px solid var(--gold); color: var(--gold);
+  background: #0a0c18cc; font-family: inherit;
+  font-size: 12px; letter-spacing: .1em;
+}
+#touch-actions button.on { background: var(--gold); color: #14101a; }
+
+/* touch-device layout: retina rides above the controls, hint moves up top */
+body.touch #retina-wrap { bottom: 156px; width: min(540px, 78vw); }
+body.touch #hint {
+  left: 50%; right: auto; bottom: auto; top: 54px;
+  transform: translateX(-50%); text-align: center; max-width: 92vw;
+}
+body.touch #dialogue { bottom: 40px; }
+
+/* ---- small screens ---- */
+@media (max-width: 768px) {
+  #hud { gap: 8px; top: 12px; left: 12px; }
+  #chapter-title { font-size: 14px; letter-spacing: .16em; }
+  #chapter-sub { display: none; }
+  #dim-badge { font-size: 12px; padding: 4px 8px; }
+  #nav { top: 12px; right: 12px; gap: 4px; }
+  #nav button { width: 27px; height: 27px; font-size: 8px; }
+  #nav button#mute { width: 30px; }
+  #panel { width: 146px; top: 52px; right: 12px; gap: 4px; }
+  #panel .chip { font-size: 9px; padding: 6px 7px; letter-spacing: .02em; }
+  #dialogue { padding: 10px 14px 6px; }
+  #text { font-size: 16px; min-height: 48px; }
+  #choices { bottom: 108px; gap: 8px; }
+  #choices button { font-size: 17px; padding: 9px 18px; }
+  #retina-label { font-size: 7px; letter-spacing: .14em; }
+  #retina { height: 24px; }
+  #title-screen h1 { font-size: clamp(38px, 11vw, 96px); }
+  #title-screen h2 { letter-spacing: .4em; text-indent: .4em; }
+  #title-screen .quote { font-size: 14px; }
+}
