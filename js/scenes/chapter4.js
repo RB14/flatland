@@ -47,7 +47,9 @@ const LADDER_CAPTIONS = [
 ];
 const mainHint = isTouch =>
   `${isTouch ? 'one finger pans · two fingers zoom / tilt / rotate' : 'drag to orbit · scroll to zoom'}<br>XW / YW / ZW are rotations <i>through</i> the 4th axis`;
-const QUIZ_HINT = 'which 3D solid is this hypershape’s slice at w = 0?<br><b>Ⓐ</b> left · <b>Ⓑ</b> middle · <b>Ⓒ</b> right — drag to orbit the shadow';
+const quizHint = isTouch => isTouch
+  ? 'which 3D solid is this hypershape’s slice at w = 0?'
+  : 'which 3D solid is this hypershape’s slice at w = 0?<br><b>Ⓐ</b> left · <b>Ⓑ</b> middle · <b>Ⓒ</b> right — drag to orbit the shadow';
 
 const hueFor = w => 0.68 - 0.60 * clamp((w + 2) / 4, 0, 1);
 
@@ -375,7 +377,7 @@ export function chapter4(ctx) {
       q.candHolders.push(holder);
     });
     quiz = q;
-    ctx.hint(QUIZ_HINT);
+    ctx.hint(quizHint(ctx.isTouch));
     askRound(q);
   }
 
@@ -453,6 +455,8 @@ export function chapter4(ctx) {
     const base = Math.min(1, spread / 3.3);
     q.candHolders.forEach((h, i) => {
       h.position.x = [-1, 0, 1][i] * spread;
+      // ride higher on narrow screens, clear of the choice buttons and hint
+      h.position.y = (i === 1 ? -3.1 : -2.9) * Math.min(1, cam.aspect + 0.3);
       h.children[0].rotation.x += dt * 0.5;
       h.children[0].rotation.y += dt * 0.33;
       const pulse = q.revealed && i === q.answerIdx ? 1 + 0.12 * Math.sin(t * 5) : 1;

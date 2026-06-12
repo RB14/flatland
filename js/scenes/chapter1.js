@@ -220,7 +220,7 @@ export function chapter1(ctx) {
         if (d < 42) {
           fx.globalAlpha = clamp(1 - d / 42, 0, 1) * 0.9;
           fx.fillStyle = '#aab1d0';
-          fx.font = '11px "IBM Plex Mono", monospace';
+          fx.font = '12px "IBM Plex Mono", monospace';
           fx.textAlign = 'center';
           fx.fillText(f.name, px, py - 24);
           fx.globalAlpha = 1;
@@ -264,14 +264,14 @@ export function chapter1(ctx) {
         if (R) dot(0.88, R.color, 1 - (R.x - player.x) / 70);
         // in 1D, "you" occupy the entire rest of your own view
         dot(0.5, '#e7c95f', 0.22);
-        rx.fillStyle = '#5d6480';
+        rx.fillStyle = '#9aa3c4';
         rx.font = '9px "IBM Plex Mono", monospace';
         rx.textAlign = 'center';
         rx.fillText(W < 400
           ? '← a 1D retina is two points →'
           : '← neighbour          a 1D retina is two points          neighbour →', W / 2, H - 4);
       } else {
-        rx.fillStyle = '#5d6480';
+        rx.fillStyle = '#9aa3c4';
         rx.font = '10px "IBM Plex Mono", monospace';
         rx.textAlign = 'center';
         rx.fillText(W < 400

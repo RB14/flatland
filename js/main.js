@@ -109,6 +109,8 @@ const manager = {
     retinaWrap.classList.toggle('hidden', !u.retina);
     glContainer.classList.toggle('hidden', !u.gl);
     touch.configure(isTouch ? this.cur.touch || null : null);
+    // hint placement: top-centre only when the joystick occupies the bottom
+    document.body.classList.toggle('joy', isTouch && !!this.cur.touch);
     hud.set(this.cur.dim, this.cur.title, this.cur.sub);
     audio.setMood(this.cur.dim);
     navDots.forEach((d, k) => d.classList.toggle('active', k === i));
@@ -197,9 +199,42 @@ function showTitle() {
   $('begin').onclick = () => {
     audio.ensure();
     audio.click();
+    const root = document.documentElement;
+    const canFullscreen = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (isTouch && canFullscreen && !document.fullscreenElement) {
+      showFullscreenAsk();
+      return;
+    }
     overlay.classList.add('hidden');
     manager.goto(0);
   };
+}
+
+// On touch devices, offer fullscreen before the journey begins. The request
+// must come from a user gesture, so it rides on the YES button's click.
+function showFullscreenAsk() {
+  overlay.innerHTML = `
+    <div id="title-screen">
+      <div class="orn"></div><div class="orn two"></div>
+      <h1 style="font-size:60px">⛶</h1>
+      <p class="quote">A journey through the dimensions is best taken<br>edge to edge — no borders, no browser chrome.</p>
+      <button id="fs-yes">⛶ &nbsp;PLAY FULLSCREEN</button>
+      <button id="fs-no" class="ghostbtn">CONTINUE IN THE BROWSER</button>
+    </div>`;
+  const start = () => {
+    overlay.classList.add('hidden');
+    manager.goto(0);
+  };
+  $('fs-yes').onclick = () => {
+    audio.click();
+    const root = document.documentElement;
+    try {
+      const p = root.requestFullscreen ? root.requestFullscreen() : root.webkitRequestFullscreen();
+      p?.catch?.(() => {});
+    } catch { /* declined or unsupported — play windowed */ }
+    start();
+  };
+  $('fs-no').onclick = () => { audio.click(); start(); };
 }
 
 function showEnd() {
