@@ -91,13 +91,17 @@ export class TouchControls {
   }
 
   _apply(dx, dy) {
+    const ax = this.input.touchAxis;
+    ax.x = dx;
+    ax.y = dy;
+    ax.active = Math.hypot(dx, dy) > 0.12;
+
+    // 'xy' mode is fully analog — the chapter reads touchAxis directly and
+    // steers toward the stick. Only 'x' mode emulates left/right keys.
+    if (this.mode !== 'x') return;
     const want = new Set();
     if (dx < -THRESHOLD) want.add('KeyA');
     if (dx > THRESHOLD) want.add('KeyD');
-    if (this.mode === 'xy') {
-      if (dy < -THRESHOLD) want.add('KeyW');
-      if (dy > THRESHOLD) want.add('KeyS');
-    }
     for (const c of [...this.active]) {
       if (!want.has(c) && c.startsWith('Key')) {
         this.active.delete(c);
@@ -116,5 +120,8 @@ export class TouchControls {
     for (const c of this.active) this.input.release(c);
     this.active.clear();
     this.thumb.style.transform = '';
+    const ax = this.input.touchAxis;
+    ax.x = ax.y = 0;
+    ax.active = false;
   }
 }

@@ -167,8 +167,13 @@ export function chapter1(ctx) {
       fx.fillStyle = '#06070f';
       fx.fillRect(0, 0, w, h);
 
-      const ppu = (w * 0.92) / 170;
-      const X = x => w / 2 + x * ppu;
+      // On wide screens the whole Line fits; on phones keep a readable scale
+      // and let the camera follow the player along the Line instead.
+      const fitPpu = (w * 0.92) / 170;
+      const ppu = Math.max(fitPpu, 4.6);
+      const halfSpan = w / (2 * ppu);
+      const camX = ppu - fitPpu > 0.01 ? clamp(player.x, -84 + halfSpan, 84 - halfSpan) : 0;
+      const X = x => w / 2 + (x - camX) * ppu;
       const baseY = h * 0.46;
 
       // the Line — the whole of Space

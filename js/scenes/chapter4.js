@@ -12,7 +12,7 @@ import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
-import { getRenderer } from '../three-setup.js';
+import { getRenderer, enableTwoFingerTwist } from '../three-setup.js';
 import { PLANES, composeRot, apply, project4, nCubeVerts, nCubeEdges } from '../math/vec4.js';
 import { sliceEdges } from '../math/poly.js';
 import { wait, tween, clamp, easeInOut } from '../util.js';
@@ -46,7 +46,7 @@ const LADDER_CAPTIONS = [
   '3D → 4D &nbsp;·&nbsp; a cube, moved <i>ana</i> — through the 4th axis — sweeps a <b>TESSERACT</b>',
 ];
 const mainHint = isTouch =>
-  `drag to orbit · ${isTouch ? 'pinch' : 'scroll'} to zoom<br>XW / YW / ZW are rotations <i>through</i> the 4th axis`;
+  `${isTouch ? 'one finger orbits · two fingers pinch / pan / twist' : 'drag to orbit · scroll to zoom'}<br>XW / YW / ZW are rotations <i>through</i> the 4th axis`;
 const QUIZ_HINT = 'which 3D solid is this hypershape’s slice at w = 0?<br><b>Ⓐ</b> left · <b>Ⓑ</b> middle · <b>Ⓒ</b> right — drag to orbit the shadow';
 
 const hueFor = w => 0.68 - 0.60 * clamp((w + 2) / 4, 0, 1);
@@ -154,7 +154,7 @@ const CAND_GEOS = {
 export function chapter4(ctx) {
   let alive = true, t = 0;
   const { dialogue } = ctx;
-  let renderer, scene, cam, controls;
+  let renderer, scene, cam, controls, twistOff = null;
   let lineMat, wireLines, vertSpheres = [], sliceMesh = null, sliceWire = null;
   let ladderLines = null, ladderMat;
   const disposables = [];
@@ -179,7 +179,8 @@ export function chapter4(ctx) {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x05030c);
     cam = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 500);
-    cam.position.set(0, 4, 26);
+    // narrow (portrait) screens need more distance to fit the projection
+    cam.position.set(0, 4, Math.min(42, 26 * Math.max(1, 1.25 / cam.aspect)));
     scene.add(cam); // so camera-attached children (quiz candidates) render
 
     const starGeo = track(new THREE.BufferGeometry());
@@ -218,6 +219,7 @@ export function chapter4(ctx) {
     controls.enableDamping = true;
     controls.minDistance = 6;
     controls.maxDistance = 60;
+    twistOff = enableTwoFingerTwist(controls);
   }
 
   // Rebuild a fat-line object's geometry (dispose old GPU buffers each frame).
@@ -628,6 +630,7 @@ export function chapter4(ctx) {
     dispose() {
       alive = false;
       cleanupRound();
+      twistOff?.();
       controls?.dispose();
       wireLines?.geometry.dispose();
       ladderLines?.geometry.dispose();

@@ -2,6 +2,8 @@ export class Input {
   constructor() {
     this.down = new Set();
     this.handlers = [];
+    // analog stick state, written by TouchControls; chapters may read it
+    this.touchAxis = { x: 0, y: 0, active: false };
     addEventListener('keydown', e => {
       if (e.repeat) return;
       this.down.add(e.code);

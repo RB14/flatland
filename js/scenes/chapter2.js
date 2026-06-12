@@ -69,6 +69,23 @@ export function chapter2(ctx) {
 
   function move(dt) {
     if (!controls) return;
+    // analog stick: Arthur turns toward — and walks in — the direction you
+    // point (screen-up = north). No tank controls on touch.
+    const ax = input.touchAxis;
+    if (ax.active) {
+      const wx = ax.x, wy = -ax.y; // screen y down -> world y up
+      const mag = Math.min(1, Math.hypot(wx, wy));
+      const target = Math.atan2(wy, wx);
+      let d = target - player.angle;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      const maxTurn = 5 * dt;
+      player.angle += clamp(d, -maxTurn, maxTurn);
+      const sp2 = 16 * mag * Math.max(0, Math.cos(d)) * dt; // ease in while still turning
+      player.pos[0] += Math.cos(player.angle) * sp2;
+      player.pos[1] += Math.sin(player.angle) * sp2;
+      collide();
+      return;
+    }
     const turn = 2.4 * dt, sp = 16 * dt;
     if (input.isDown('KeyA', 'ArrowLeft')) player.angle += turn;
     if (input.isDown('KeyD', 'ArrowRight')) player.angle -= turn;
@@ -111,7 +128,7 @@ export function chapter2(ctx) {
     if (!alive) return;
     phase = 'findHex';
     ctx.hint(ctx.isTouch
-      ? 'stick: up/down to walk · left/right to turn<br>find <b style="color:#7fd4ff">Hex ⬡</b> — follow the beacon'
+      ? 'drag the stick — you walk where you point<br>find <b style="color:#7fd4ff">Hex ⬡</b> — follow the beacon'
       : 'W / S move · A / D turn · Q / E sidestep<br>find <b style="color:#7fd4ff">Hex ⬡</b> — follow the beacon');
 
     await until(() => !alive || dist2(player.pos, world.hex.pos) < 13 * 13);

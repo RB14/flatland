@@ -90,6 +90,7 @@ html, body {
 #panel {
   position: fixed; right: 18px; top: 64px; z-index: 12;
   display: flex; flex-direction: column; gap: 6px; width: 178px;
+  max-height: calc(100dvh - 150px); overflow-y: auto;
 }
 #panel .chip {
   font-family: inherit; font-size: 11px; letter-spacing: .06em;
@@ -240,4 +241,13 @@ body.touch #dialogue { bottom: 40px; }
   #title-screen h1 { font-size: clamp(38px, 11vw, 96px); }
   #title-screen h2 { letter-spacing: .4em; text-indent: .4em; }
   #title-screen .quote { font-size: 14px; }
+}
+
+/* landscape phones: little vertical room — tuck the retina beside the stick */
+@media (max-height: 520px) {
+  body.touch #retina-wrap { bottom: 12px; width: min(420px, 44vw); }
+  body.touch #hint { top: 42px; }
+  #joy { width: 104px; height: 104px; }
+  #touch-actions button { width: 64px; height: 64px; }
+  #panel { max-height: calc(100dvh - 90px); top: 50px; }
 }

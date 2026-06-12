@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
-import { getRenderer } from '../three-setup.js';
+import { getRenderer, enableTwoFingerTwist } from '../three-setup.js';
 import { buildWorld, shapeSegments, transformedPts } from '../world2d.js';
 import { convexHull2D, sliceEdges, extractEdges } from '../math/poly.js';
 import { wait, tween, easeInOut } from '../util.js';
@@ -39,7 +39,7 @@ const ORDINAL = ['first', 'second', 'third'];
 export function chapter3(ctx) {
   let alive = true, t = 0;
   const { dialogue } = ctx;
-  let renderer, scene, cam, controls;
+  let renderer, scene, cam, controls, twistOff = null;
   let riseK = 0, rising = true, highlight = 0;
   const world = ctx.state.world || buildWorld();
   const arthur = ctx.state.arthur || { pos: world.spawn, angle: Math.PI / 2 };
@@ -132,6 +132,7 @@ export function chapter3(ctx) {
     const pl = new THREE.PointLight(0xc9a3ff, 600, 90);
     pl.position.copy(sph.position);
     scene.add(pl);
+    scene.userData.sphereLight = pl;
 
     // slice presentation group at the world's centre
     sliceGroup = new THREE.Group();
@@ -144,9 +145,11 @@ export function chapter3(ctx) {
     controls.target.set(0, 0, 0);
     controls.maxPolarAngle = Math.PI / 2 - 0.04;
     controls.minDistance = 18;
-    controls.maxDistance = 260;
+    controls.maxDistance = 300;
     controls.enableDamping = true;
+    controls.screenSpacePanning = false; // pan glides along the plane
     controls.enabled = false;
+    twistOff = enableTwoFingerTwist(controls);
     camRig(0);
   }
 
@@ -397,11 +400,15 @@ export function chapter3(ctx) {
     }
   }
 
+  // Portrait screens have a much narrower horizontal FOV: pull the camera
+  // back so the whole scene (Sphere included) fits without manual zooming.
+  const aspectPull = () => Math.min(1.9, Math.max(1, Math.sqrt(1.5 / cam.aspect)));
+
   function camRig(k) {
     const e = easeInOut(k);
     const a = W2(arthur.pos);
     const from = new THREE.Vector3(a.x, 1.1, a.z + 7);
-    const to = new THREE.Vector3(0, 78, 95);
+    const to = new THREE.Vector3(0, 78, 95).multiplyScalar(aspectPull());
     cam.position.lerpVectors(from, to, e);
     const lookFrom = new THREE.Vector3(a.x, 0.8, a.z - 20);
     const lookTo = new THREE.Vector3(0, 0, 0);
@@ -442,10 +449,10 @@ export function chapter3(ctx) {
   // Endless-mode round with three random crystals in a tumbling line-up.
   async function crystalRound() {
     const crystals = [0, 1, 2].map(makeCrystal);
-    const slots = [-26, 0, 26];
     crystals.forEach((c, i) => {
       const disp = ghostOf(c.geo, new THREE.Color(c.color).getHex());
-      disp.position.set(slots[i], 16, -8);
+      disp.position.set(0, 16, -8); // x and scale follow the aspect each frame
+      disp.userData.slot = i;
       scene.add(disp);
       lineup.push(disp);
       scene.add(c.ghost);
@@ -489,7 +496,9 @@ export function chapter3(ctx) {
     rising = false;
     if (controls) controls.enabled = true;
     if (!alive) return;
-    ctx.hint(ctx.isTouch ? 'drag to orbit · pinch to zoom' : 'drag to orbit · scroll to zoom');
+    ctx.hint(ctx.isTouch
+      ? 'one finger orbits · two fingers pinch / pan / twist'
+      : 'drag to orbit · scroll to zoom');
     await dialogue.say(L_BEHOLD);
     if (!alive) return;
     await tween(v => { highlight = v; }, 0, 1, 1.2);
@@ -498,7 +507,8 @@ export function chapter3(ctx) {
     if (!alive) return;
 
     // dolly in over the slice stage for the examination
-    const camFrom = cam.position.clone(), camTo = new THREE.Vector3(0, 42, 54);
+    const camFrom = cam.position.clone();
+    const camTo = new THREE.Vector3(0, 42, 54).multiplyScalar(aspectPull());
     await tween(k => { if (!rising) cam.position.lerpVectors(camFrom, camTo, k); }, 0, 1, 2.2);
 
     // story rounds: Abbott's classic trio
@@ -538,13 +548,19 @@ export function chapter3(ctx) {
 
       const sph = scene.userData.sphereNPC;
       sph.position.y = 17 + Math.sin(t * 0.7) * 1.6;
+      // keep the Sphere in frame on narrow screens
+      sph.position.x = 46 * Math.min(1, cam.aspect / 1.3);
+      scene.userData.sphereLight.position.copy(sph.position);
 
       // "I can see inside everything" — interiors pulse open
       const op = 0.18 + highlight * (0.25 + Math.sin(t * 3) * 0.12);
       for (const m of fillMats) m.opacity = op;
 
-      // tumbling crystal line-up
+      // tumbling crystal line-up, spaced and sized to fit the viewport
+      const spread = Math.min(26, 4 + 24 * cam.aspect);
       for (const d of lineup) {
+        d.position.x = (d.userData.slot - 1) * spread;
+        d.scale.setScalar(Math.min(1, spread / 26));
         d.rotation.x += dt * 0.4;
         d.rotation.y += dt * 0.27;
       }
@@ -563,6 +579,7 @@ export function chapter3(ctx) {
 
     dispose() {
       alive = false;
+      twistOff?.();
       controls?.dispose();
       clearSliceMeshes();
       for (const d of disposables) d.dispose?.();

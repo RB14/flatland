@@ -81,6 +81,8 @@ const ctx = {
   showEnd,
 };
 
+window.__fl = ctx.state; // debug/testing peek at chapter state
+
 const factories = [chapter0, chapter1, chapter2, chapter3, chapter4];
 const NAV_LABELS = ['0D', '1D', '2D', '3D', '4D'];
 const navDots = [];
