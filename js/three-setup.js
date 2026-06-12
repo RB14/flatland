@@ -43,7 +43,9 @@ export function enableTwoFingerTwist(controls) {
     prevAngle = a;
     const cam = controls.object;
     const off = cam.position.clone().sub(controls.target);
-    off.applyAxisAngle(up, -d); // scene follows the fingers
+    // content follows the fingers: orbiting the camera by +d spins the scene
+    // by -d on screen, and the apparent direction flips when viewing from below
+    off.applyAxisAngle(up, off.y >= 0 ? d : -d);
     cam.position.copy(controls.target).add(off);
     cam.lookAt(controls.target);
   };
